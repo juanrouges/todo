@@ -1,6 +1,24 @@
-import React from "react";
+import React, { useState } from "react";
 
-const Form = () => {
+const Form = (props) => {
+
+  const [name, setName] = useState('');
+
+  function handleChange(e) {
+    setName(e.target.value);
+  };
+
+  function handleSubmit(e) {
+    e.preventDefault();
+
+    if (!name) {
+      alert('Enter a value');
+    } else {
+      props.addTask(name);
+      setName('');
+    }
+  };
+
   return (
     <form>
       <h2 className="label-wrapper">
@@ -12,10 +30,13 @@ const Form = () => {
         className="input input__lg"
         name="text"
         autoComplete="off"
+        value={name}
+        onChange={handleChange}
       />
-      <button type="submit" className="btn btn__primary btn__lg">Add</button>
+      <button type="submit" className="btn btn__primary btn__lg" onClick={handleSubmit}>Add</button>
     </form>
   );
-}
+
+};
 
 export default Form;
