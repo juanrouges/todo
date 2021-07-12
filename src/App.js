@@ -1,12 +1,30 @@
-import React, { useState } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import Form from "./components/Form";
 import FilterButton from "./components/FilterButton";
 import Todo from "./components/Todo";
 import { nanoid } from "nanoid";
 
+function usePrevious(value) {
+  const ref = useRef();
+  useEffect(() => {
+    ref.current = value;
+  });
+  return ref.current;
+}
+
+const FILTER_MAP = {
+  All: () => true,
+  Active: task => !task.completed,
+  Completed: task => task.completed
+};
+
+const FILTER_NAMES = Object.keys(FILTER_MAP);
+
 const App = (props) => {
 
   const [tasks, setTasks] = useState(props.tasks);
+  const [filter, setFilter] = useState('All');
+  const listHeadingRef = useRef(null);
 
   function addTask(name) {    
     const newTask = { 
@@ -45,7 +63,9 @@ const App = (props) => {
     setTasks(remainingTasks);
   };
 
-  const taskList = tasks.map(task => (
+  const taskList = tasks
+  .filter(FILTER_MAP[filter])
+  .map(task => (
     <Todo 
       id={task.id} 
       name={task.name} 
@@ -57,8 +77,24 @@ const App = (props) => {
     />
   ));
 
+  const filterList = FILTER_NAMES.map(name => (
+    <FilterButton 
+      key={name} 
+      name={name} 
+      isPressed={name === filter} 
+      setFilter={setFilter} 
+    />
+  ));
+
   const tasksNoun = taskList.length !== 1 ? 'tasks' : 'task';
   const headingText = `${taskList.length} ${tasksNoun} remaining`;
+  const prevTaskLength = usePrevious(tasks.length);
+
+  useEffect(() => {
+    if (tasks.length - prevTaskLength === -1) {
+      listHeadingRef.current.focus();
+    }
+  }, [tasks.length, prevTaskLength]);
 
   return (
     <div className="todoapp stack-large">
@@ -67,20 +103,18 @@ const App = (props) => {
       <Form addTask={addTask} />
 
       <div className="filters btn-group stack-exception">
-        <FilterButton />
-        <FilterButton />
-        <FilterButton />
+        {filterList}
       </div>
 
-      <h2 id="list-heading">{headingText}</h2>
+      <h2 id="list-heading" tabIndex="-1" ref={listHeadingRef}>
+        {headingText}
+      </h2>
 
       <ul
-        // role="list"
         className="todo-list stack-large stack-exception"
-        aria-labelledby="list-heading"
+        aria-labelledby="list-heading" 
       >
         {taskList}
-
       </ul>
     </div>
   );
